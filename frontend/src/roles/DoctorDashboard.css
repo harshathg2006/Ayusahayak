@@ -1,0 +1,138 @@
+.doctor-dashboard {
+padding: 30px;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background-color: #f8fafc;
+min-height: 100vh;
+color: #1f2937;
+}
+
+h2 {
+font-size: 2rem;
+margin-bottom: 20px;
+color: #0f172a;
+}
+
+.queue-section ul {
+list-style: none;
+padding: 0;
+}
+
+.queue-section li {
+background-color: #ffffff;
+border: 1px solid #e2e8f0;
+border-radius: 10px;
+padding: 12px 20px;
+margin-bottom: 12px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.queue-section button {
+background-color: #2563eb;
+color: white;
+border: none;
+padding: 8px 16px;
+border-radius: 6px;
+cursor: pointer;
+transition: background-color 0.3s;
+}
+
+.queue-section button:hover {
+background-color: #1d4ed8;
+}
+
+.consultation-section {
+border: 1px solid #e5e7eb;
+border-radius: 12px;
+padding: 25px;
+background-color: #ffffff;
+box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+margin-top: 20px;
+}
+
+.video-call-box,
+.history-box,
+.prescription-box,
+.chat-box {
+margin-top: 24px;
+padding: 16px;
+background-color: #f1f5f9;
+border-left: 4px solid #3b82f6;
+border-radius: 8px;
+}
+
+textarea {
+width: 100%;
+height: 100px;
+padding: 10px;
+border: 1px solid #cbd5e1;
+border-radius: 6px;
+resize: vertical;
+font-size: 1rem;
+margin-top: 8px;
+}
+
+.prescription-box button {
+margin-top: 10px;
+background-color: #10b981;
+color: white;
+border: none;
+padding: 8px 18px;
+border-radius: 6px;
+cursor: pointer;
+transition: background-color 0.3s;
+}
+
+.prescription-box button:hover {
+background-color: #059669;
+}
+
+.chat-box button {
+background-color: #3b82f6;
+color: white;
+border: none;
+padding: 6px 14px;
+border-radius: 6px;
+margin-top: 8px;
+cursor: pointer;
+transition: background-color 0.3s;
+}
+
+.chat-box button:hover {
+background-color: #2563eb;
+}
+
+.chat-window {
+margin-top: 12px;
+padding: 12px;
+border: 1px solid #e2e8f0;
+background-color: #f8fafc;
+border-radius: 6px;
+}
+
+.chat-window input {
+width: 100%;
+padding: 10px;
+margin-top: 8px;
+border: 1px solid #cbd5e1;
+border-radius: 6px;
+font-size: 1rem;
+}
+
+.end-btn {
+margin-top: 24px;
+background-color: #ef4444;
+color: white;
+border: none;
+padding: 10px 24px;
+border-radius: 8px;
+cursor: pointer;
+font-size: 1rem;
+transition: background-color 0.3s;
+}
+
+.end-btn:hover {
+background-color: #dc2626;
+}
