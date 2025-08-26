@@ -1,0 +1,30 @@
+.upload-lab-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.patient-list {
+  list-style: none;
+  padding: 0;
+}
+
+.patient-list li {
+  padding: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.patient-list li.selected {
+  background-color: #d0f0d0;
+  font-weight: bold;
+}
+
+.upload-section {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

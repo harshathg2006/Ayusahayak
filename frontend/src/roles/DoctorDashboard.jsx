@@ -69,6 +69,17 @@ function DoctorDashboard() {
         <div className="consultation-section">
           <h3>Consulting: {selectedPatient.name}</h3>
 
+          {/* Patient Details */}
+          <div className="patient-details-box">
+            <h4>Patient Details</h4>
+            <p><strong>Name:</strong> {selectedPatient.name}</p>
+            <p><strong>Age:</strong> {selectedPatient.age}</p>
+            <p><strong>Gender:</strong> {selectedPatient.gender}</p>
+            <p><strong>Symptoms:</strong> {selectedPatient.symptoms || 'N/A'}</p>
+            <p><strong>Vitals:</strong> {selectedPatient.vitals || 'N/A'}</p>
+            <p><strong>Notes:</strong> {selectedPatient.notes || 'N/A'}</p>
+          </div>
+
           {videoCallActive && (
             <div className="video-call-box">
               <p>📹 Video Consultation Active (Integrate Jitsi Here)</p>
@@ -76,9 +87,9 @@ function DoctorDashboard() {
             </div>
           )}
 
+          {/* Medical History */}
           <div className="history-box">
             <h4>Patient Medical History</h4>
-            <p>History details go here (e.g., past prescriptions, vitals, lab results)</p>
             <ul>
               {selectedPatient.prescriptions?.map((p, idx) => (
                 <li key={idx}>{new Date(p.createdAt).toLocaleString()} - {p.text}</li>
@@ -86,6 +97,29 @@ function DoctorDashboard() {
             </ul>
           </div>
 
+          {/* Lab Reports Section */}
+          <div className="lab-report-box">
+            <h4>Lab Reports</h4>
+            {selectedPatient.labReports?.length ? (
+              selectedPatient.labReports.map((report, idx) => (
+                <div key={idx} style={{ marginBottom: '15px' }}>
+                  <p>{report.test} - Uploaded: {new Date(report.uploadedAt).toLocaleString()}</p>
+                  {report.fileUrl && (
+                    <iframe
+                      src={`http://localhost:5000${report.fileUrl}`}
+                      width="100%"
+                      height="400px"
+                      title={`Lab Report ${idx + 1}`}
+                    />
+                  )}
+                </div>
+              ))
+            ) : (
+              <p>No lab reports uploaded yet.</p>
+            )}
+          </div>
+
+          {/* Prescription & Advice */}
           <div className="prescription-box">
             <h4>Prescription & Advice</h4>
             <textarea
@@ -96,6 +130,7 @@ function DoctorDashboard() {
             <button onClick={handleSavePrescription}>Save</button>
           </div>
 
+          {/* Chat with Nurse */}
           <div className="chat-box">
             <h4>Chat with Nurse</h4>
             <button onClick={() => setChatOpen(!chatOpen)}>

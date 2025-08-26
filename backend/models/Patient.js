@@ -20,10 +20,13 @@ const patientSchema = new mongoose.Schema({
   symptoms: String,
   vitals: String,
   notes: String,
-  patientUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // link if patient has account
+  status: { type: String, enum: ["pending", "pending_consultation", "consulted"], default: "pending" },
+  patientUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   doctorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   prescriptions: [prescriptionSchema],
   labReports: [labReportSchema]
 }, { timestamps: true });
+
+
 
 module.exports = mongoose.model("Patient", patientSchema);
