@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './NewPatient.css';
+import API from '../api/axios';
 
 function NewPatient() {
   const navigate = useNavigate();
@@ -17,12 +18,16 @@ function NewPatient() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting patient:', form);
-    // Later: send to backend here
-    alert('Patient registered successfully!');
-    navigate('/dashboard');
+    try {
+      await API.post('/patients', form);
+      alert('Patient registered successfully!');
+      navigate('/dashboard');
+    } catch (err) {
+      console.error(err);
+      alert('Error registering patient: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   return (

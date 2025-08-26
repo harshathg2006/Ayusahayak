@@ -1,25 +1,54 @@
-// Ayusahayak/src/roles/LabDashboard.jsx
 import { useState, useEffect } from 'react';
 import './LabDashboard.css';
+import API from '../api/axios';
 
 function LabDashboard() {
-  const [bookings, setBookings] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState({}); // id -> file
 
   useEffect(() => {
-    // Dummy data fetch simulation
-    setBookings([
-      { id: 1, patient: 'Ravi', test: 'CBC', status: 'pending' },
-      { id: 2, patient: 'Neha', test: 'Lipid Panel', status: 'sample_collected' },
-    ]);
+    const fetch = async () => {
+      try {
+        const res = await API.get('/patients');
+        setPatients(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetch();
   }, []);
 
-  const handleMarkCollected = (id) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'sample_collected' } : b));
+  const handleMarkCollected = async (id) => {
+    try {
+      await API.put(`/patients/${id}`, { status: "sample_collected" });
+      setPatients(prev => prev.map(p => p._id === id ? { ...p, labReports: p.labReports } : p));
+      alert('Marked as collected');
+    } catch (err) {
+      console.error(err);
+      alert('Error');
+    }
   };
 
-  const handleUploadReport = (id) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'report_sent' } : b));
-    alert('Patient notified (simulated)');
+  const handleFileChange = (id, file) => {
+    setSelectedFiles(prev => ({ ...prev, [id]: file }));
+  };
+
+  const handleUploadReport = async (id) => {
+    const file = selectedFiles[id];
+    if (!file) return alert('Please select a file first');
+    const formData = new FormData();
+    formData.append('report', file);
+    formData.append('test', 'Lab Test');
+
+    try {
+      await API.post(`/patients/${id}/report`, formData);
+      alert('Report uploaded');
+      const res = await API.get('/patients');
+      setPatients(res.data);
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed');
+    }
   };
 
   return (
@@ -29,29 +58,27 @@ function LabDashboard() {
         <thead>
           <tr>
             <th>Patient</th>
-            <th>Test</th>
-            <th>Status</th>
+            <th>Test(s)</th>
+            <th>Latest Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {bookings.map(b => (
-            <tr key={b.id}>
-              <td>{b.patient}</td>
-              <td>{b.test}</td>
-              <td>{b.status.replace('_', ' ')}</td>
-              <td>
-                {b.status === 'pending' && <button onClick={() => handleMarkCollected(b.id)}>Mark Collected</button>}
-                {b.status === 'sample_collected' && (
-                  <>
-                    <input type="file" accept="application/pdf" />
-                    <button onClick={() => handleUploadReport(b.id)}>Upload Report</button>
-                  </>
-                )}
-                {b.status === 'report_sent' && <span>✅ Sent</span>}
-              </td>
-            </tr>
-          ))}
+          {patients.map(p => {
+            const latest = p.labReports && p.labReports.length ? p.labReports[p.labReports.length - 1] : null;
+            return (
+              <tr key={p._id}>
+                <td>{p.name}</td>
+                <td>{latest ? latest.test : 'No test yet'}</td>
+                <td>{latest ? latest.status.replace('_',' ') : 'pending'}</td>
+                <td>
+                  <button onClick={() => handleMarkCollected(p._id)}>Mark Collected</button>
+                  <input type="file" accept="application/pdf" onChange={(e) => handleFileChange(p._id, e.target.files[0])} />
+                  <button onClick={() => handleUploadReport(p._1d ? p._id : p._id)}>Upload Report</button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
