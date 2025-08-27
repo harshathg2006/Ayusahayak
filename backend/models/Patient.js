@@ -13,6 +13,13 @@ const labReportSchema = new mongoose.Schema({
   uploadedAt: Date
 });
 
+const labRequestSchema = new mongoose.Schema({
+  test: String,
+  status: { type: String, enum: ["requested", "ready", "attached"], default: "requested" },
+  requestedAt: { type: Date, default: Date.now },
+  nurseNotes: String
+});
+
 const patientSchema = new mongoose.Schema({
   name: { type: String, required: true },
   age: Number,
@@ -24,9 +31,8 @@ const patientSchema = new mongoose.Schema({
   patientUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   doctorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   prescriptions: [prescriptionSchema],
-  labReports: [labReportSchema]
+  labReports: [labReportSchema],       // now defined
+  labRequests: [labRequestSchema]      // track requested/ready tests
 }, { timestamps: true });
-
-
 
 module.exports = mongoose.model("Patient", patientSchema);

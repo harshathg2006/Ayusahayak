@@ -11,7 +11,8 @@ function SendToDoctor() {
       try {
         const res = await API.get("/patients/nurse-list");
         // Only show patients with at least one lab report
-        const readyPatients = res.data.filter(p => p.labReports?.length);
+       const readyPatients = res.data.filter(p => p.labReports?.length && p.status === "pending");
+
         setPatients(readyPatients);
       } catch (err) {
         console.error("Error fetching patients:", err);

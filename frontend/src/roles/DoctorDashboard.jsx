@@ -38,7 +38,6 @@ function DoctorDashboard() {
     try {
       await API.put(`/patients/${selectedPatient._id}`, { prescription: prescriptionText });
       alert('Prescription saved!');
-      // refresh selected patient
       const res = await API.get(`/patients/${selectedPatient._id}`);
       setSelectedPatient(res.data);
     } catch (err) {
@@ -91,26 +90,37 @@ function DoctorDashboard() {
           <div className="history-box">
             <h4>Patient Medical History</h4>
             <ul>
-              {selectedPatient.prescriptions?.map((p, idx) => (
+              {[...selectedPatient.prescriptions]?.reverse().map((p, idx) => (
                 <li key={idx}>{new Date(p.createdAt).toLocaleString()} - {p.text}</li>
               ))}
             </ul>
           </div>
 
-          {/* Lab Reports Section */}
+          {/* Lab Reports */}
           <div className="lab-report-box">
             <h4>Lab Reports</h4>
             {selectedPatient.labReports?.length ? (
               selectedPatient.labReports.map((report, idx) => (
                 <div key={idx} style={{ marginBottom: '15px' }}>
-                  <p>{report.test} - Uploaded: {new Date(report.uploadedAt).toLocaleString()}</p>
+                  <p>
+                    {report.test} - Uploaded: {new Date(report.uploadedAt).toLocaleString()} - Status: {report.status.replace("_", " ")}
+                  </p>
                   {report.fileUrl && (
-                    <iframe
-                      src={`http://localhost:5000${report.fileUrl}`}
-                      width="100%"
-                      height="400px"
-                      title={`Lab Report ${idx + 1}`}
-                    />
+                    <div>
+                      <iframe
+                        src={`http://localhost:5000${report.fileUrl}`}
+                        width="100%"
+                        height="400px"
+                        title={`Lab Report ${idx + 1}`}
+                      />
+                      <a
+                        href={`http://localhost:5000${report.fileUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View PDF
+                      </a>
+                    </div>
                   )}
                 </div>
               ))

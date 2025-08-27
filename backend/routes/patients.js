@@ -6,11 +6,8 @@ const fs = require("fs");
 const Patient = require("../models/Patient");
 const auth = require("../middleware/authMiddleware");
 const User = require("../models/User");
-const authMiddleware = require('../middleware/authMiddleware'); 
 
-
-
-// upload dir
+// Upload directory
 const uploadDir = path.join(__dirname, "..", "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
@@ -23,22 +20,19 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// POST /api/patients  (nurse)
-// POST /api/patients  (nurse creates a patient + login account)
-// POST /api/patients  (nurse)
+/**
+ * CREATE PATIENT (Nurse)
+ */
 router.post("/", auth(["nurse"]), async (req, res) => {
   try {
     const { name, email } = req.body;
-
-    // 1. Create User with role 'patient' (no password)
     const user = new User({ username: name, role: "patient", email });
     await user.save();
 
-    // 2. Create Patient record and link to User, set default status
     const patient = new Patient({
       ...req.body,
       patientUserId: user._id,
-      status: "pending"   // <- ensure new patient has status
+      status: "pending"
     });
     await patient.save();
 
@@ -49,21 +43,31 @@ router.post("/", auth(["nurse"]), async (req, res) => {
   }
 });
 
-
-
-
-
-// GET /api/patients  (doctor, lab, admin)
+/**
+ * GET ALL PATIENTS (Doctor, Lab, Admin)
+ */
 router.get("/", auth(["doctor", "lab", "admin"]), async (req, res) => {
   try {
-    const patients = await Patient.find().populate("doctorId", "username").sort({ createdAt: -1 });
+    let query = {};
+
+    // If doctor, show only patients pending consultation
+    if (req.user.role === "doctor") {
+      query.status = "pending_consultation";
+    }
+
+    const patients = await Patient.find(query)
+      .populate("doctorId", "username")
+      .sort({ createdAt: -1 });
+
     res.json(patients);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// GET /patients/me
+/**
+ * GET PATIENT BY USER ID (Patient)
+ */
 router.get("/me", auth(), async (req, res) => {
   try {
     const patient = await Patient.findOne({ patientUserId: req.user.id })
@@ -79,10 +83,11 @@ router.get("/me", auth(), async (req, res) => {
   }
 });
 
-// GET /api/patients/nurse-list  (nurse)
+/**
+ * NURSE LIST (patients not consulted)
+ */
 router.get("/nurse-list", auth(["nurse"]), async (req, res) => {
   try {
-    // List all patients not yet marked as consulted
     const patients = await Patient.find({ status: { $ne: "consulted" } }).sort({ createdAt: -1 });
     res.json(patients);
   } catch (err) {
@@ -91,16 +96,16 @@ router.get("/nurse-list", auth(["nurse"]), async (req, res) => {
   }
 });
 
-// GET /api/patients/:id  (doctor/lab/admin/patient)
+/**
+ * GET PATIENT BY ID (Doctor/Lab/Admin/Patient)
+ */
 router.get("/:id", auth(["doctor", "lab", "admin", "patient"]), async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id);
     if (!patient) return res.status(404).json({ message: "Patient not found" });
 
-    if (req.user.role === "patient") {
-      if (!patient.patientUserId || patient.patientUserId.toString() !== req.user.id) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
+    if (req.user.role === "patient" && patient.patientUserId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
     }
     res.json(patient);
   } catch (err) {
@@ -108,20 +113,15 @@ router.get("/:id", auth(["doctor", "lab", "admin", "patient"]), async (req, res)
   }
 });
 
-// GET /api/patients/me  (patient)
-// GET /api/patients/me  (patient)
-
-
-
-
-
-// PUT /api/patients/:id  (doctor, lab, admin)
+/**
+ * UPDATE PATIENT (Doctor, Lab, Admin)
+ */
 router.put("/:id", auth(["doctor", "lab", "admin"]), async (req, res) => {
   try {
-    // If a doctor sends { prescription: "text" } then push to prescriptions
     if (req.body.prescription) {
       const patient = await Patient.findById(req.params.id);
       if (!patient) return res.status(404).json({ message: "Patient not found" });
+
       patient.prescriptions.push({
         doctorId: req.user.id,
         text: req.body.prescription
@@ -137,7 +137,9 @@ router.put("/:id", auth(["doctor", "lab", "admin"]), async (req, res) => {
   }
 });
 
-// POST /api/patients/:id/report  (nurse)
+/**
+ * UPLOAD LAB REPORT (Nurse)
+ */
 router.post("/:id/report", auth(["nurse"]), upload.single("report"), async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id);
@@ -159,7 +161,53 @@ router.post("/:id/report", auth(["nurse"]), upload.single("report"), async (req,
   }
 });
 
-// POST /api/patients/:id/send-to-doctor  (nurse)
+/**
+ * REQUEST LAB TEST (Nurse)
+ */
+router.post("/:id/lab-request", auth(["nurse"]), async (req, res) => {
+  try {
+    const { test, nurseNotes } = req.body;
+    const patient = await Patient.findById(req.params.id);
+    if (!patient) return res.status(404).json({ message: "Patient not found" });
+
+    patient.labRequests.push({
+      test,
+      status: "requested",
+      requestedAt: new Date(),
+      nurseNotes: nurseNotes || ""
+    });
+
+    await patient.save();
+    res.json({ message: "Lab test requested", patient });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Mark lab request as ready (Lab)
+router.post("/:id/mark-lab-ready", auth(["lab"]), async (req, res) => {
+  try {
+    const { labRequestId } = req.body;
+    const patient = await Patient.findById(req.params.id);
+    if (!patient) return res.status(404).json({ message: "Patient not found" });
+
+    const request = patient.labRequests.id(labRequestId);
+    if (!request) return res.status(404).json({ message: "Lab request not found" });
+
+    request.status = "ready";
+    await patient.save();
+    res.json({ message: "Lab request marked ready", patient });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+/**
+ * SEND PATIENT TO DOCTOR (Nurse)
+ */
 router.post("/:id/send-to-doctor", auth(["nurse"]), async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id);
@@ -175,9 +223,10 @@ router.post("/:id/send-to-doctor", auth(["nurse"]), async (req, res) => {
   }
 });
 
-
-// POST /api/patients/:id/mark-consulted  (nurse)
-router.post("/:id/mark-consulted", auth(["nurse"]), async (req, res) => {
+/**
+ * MARK CONSULTED (Nurse)
+ */
+router.post("/:id/mark-consulted", auth(["doctor"]), async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id);
     if (!patient) return res.status(404).json({ message: "Patient not found" });
@@ -191,9 +240,31 @@ router.post("/:id/mark-consulted", auth(["nurse"]), async (req, res) => {
   }
 });
 
+// POST /patients/:id/attach-lab-report
+router.post("/:id/attach-lab-report", auth(["lab"]), upload.single("report"), async (req, res) => {
+  try {
+    const { labRequestId } = req.body;
+    const patient = await Patient.findById(req.params.id);
+    if (!patient) return res.status(404).json({ message: "Patient not found" });
 
+    const request = patient.labRequests.id(labRequestId);
+    if (!request) return res.status(404).json({ message: "Lab request not found" });
 
+    request.status = "attached";
 
+    patient.labReports.push({
+      test: request.test,
+      status: "report_sent",
+      fileUrl: `/uploads/${req.file.filename}`,
+      uploadedAt: new Date(),
+    });
 
+    await patient.save();
+    res.json({ message: "Lab report attached", patient });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 module.exports = router;

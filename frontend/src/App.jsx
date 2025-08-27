@@ -3,8 +3,10 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Navbar from './components/Navbar';
 import NewPatient from './pages/NewPatient';
-import UploadLabReports from './pages/UploadLabReports';
 import SendToDoctor from './pages/SendToDoctor';
+import RequestLabTest from './pages/RequestLabTest'; // import the new component
+import LabDashboard from './roles/LabDashboard';
+
 
 function App() {
   return (
@@ -62,16 +64,17 @@ function App() {
             })()
           }
         />
-        <Route
-  path="/nurse/upload-lab-reports"
+<Route
+  path="/lab/dashboard"
   element={
     (() => {
       const auth = JSON.parse(localStorage.getItem("auth"));
       const user = auth?.user;
-      return user?.role === "nurse" ? <UploadLabReports /> : <Navigate to="/dashboard" />;
+      return user?.role === "lab" ? <LabDashboard /> : <Navigate to="/dashboard" />;
     })()
   }
 />
+
 <Route
   path="/nurse/send-to-doctor"
   element={
@@ -82,6 +85,7 @@ function App() {
     })()
   }
 />
+
 
       
       </Routes>
